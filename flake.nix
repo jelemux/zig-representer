@@ -55,7 +55,7 @@
 
         meta = with pkgs.lib; {
           description = "An Exercism representer for the Zig programming language";
-          license = licenses.mit;
+          license = licenses.agpl3Only;
           platforms = platforms.linux;
           maintainers = with maintainers; [ jelemux ];
         };
