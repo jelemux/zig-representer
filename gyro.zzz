@@ -1,0 +1,11 @@
+pkgs:
+  representer:
+    version: 0.0.0
+    description: "An Exercism representer for the Zig programming language"
+    license: AGPL-3.0
+    source_url: "https://github.com/jelemux/zig-representer"
+
+    root: src/main.zig
+    files:
+      README.md
+      LICENSE
