@@ -5,8 +5,8 @@
 # Zig
 zig-cache/
 zig-out/
-result/
 
 # Nix & direnv
 .cache/
 .direnv/
+result
