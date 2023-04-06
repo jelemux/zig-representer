@@ -4,7 +4,6 @@
     nixpkgs.url = github:NixOS/nixpkgs/nixos-22.05;
     zig.url     = github:mitchellh/zig-overlay;
     utils.url   = github:numtide/flake-utils;
-    gyro.url    = github:mattnite/gyro;
 
     # Used for shell.nix
     flake-compat = {
@@ -13,7 +12,7 @@
     };
   };
 
-  outputs = {self, nixpkgs, zig, utils, gyro, ...} @ inputs: with utils.lib;
+  outputs = {self, nixpkgs, zig, utils, ...} @ inputs: with utils.lib;
     eachSystem (builtins.filter (sys: !(builtins.elem sys [system.x86_64-darwin system.aarch64-darwin])) defaultSystems) (system: let
 
       pkgs = import nixpkgs {
@@ -22,7 +21,6 @@
           (final: prev: {
             zigpkgs = inputs.zig.packages.${prev.system};
             # zig = inputs.zig.packages.${zigVersion}.${prev.system};
-            gyropkgs = inputs.gyro.packages.${prev.system};
           })
         ];
       };
@@ -31,12 +29,10 @@
       systems = builtins.attrNames inputs.zig.packages;
 
       pname = "zig-representer";
-      version = "0.1.0";
+      version = "0.0.0";
 
       zigVersion = "0.10.1";
       z = pkgs.zigpkgs.${zigVersion};
-
-      g = pkgs.gyropkgs.default;
 
       zig_representer = pkgs.stdenv.mkDerivation {
         inherit pname version;
@@ -73,7 +69,7 @@
 
       devShells.default = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [ ];
-        buildInputs = with pkgs; [ z g ];
+        buildInputs = with pkgs; [ z ];
       };
     });
 }
