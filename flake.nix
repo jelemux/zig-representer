@@ -63,12 +63,13 @@
 
     in rec {
       packages = {
-        zig_representer = zig_representer;
         default = zig_representer;
       };
 
       devShells.default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [ ];
+        nativeBuildInputs = with pkgs; [
+          docker
+        ];
         buildInputs = with pkgs; [ z ];
       };
     });
