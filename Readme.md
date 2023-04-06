@@ -1,4 +1,4 @@
-# Zig representer
+# 📽 Zig representer
 
 An [Exercism Representer] for the Zig programming language.
 
