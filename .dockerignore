@@ -1,0 +1,30 @@
+# IntelliJ
+.idea/
+*.iml
+
+# Nix
+default.nix
+flake.nix
+flake.lock
+result
+
+# direnv
+.direnv/
+.envrc
+
+# Git
+.gitignore
+.gitmodules
+
+# Zig
+zig-cache/
+zig-out/
+
+# Docker
+.dockerignore
+Dockerfile
+
+# Repository files
+LICENSE
+Readme.md
+CODE_OF_CONDUCT.md
