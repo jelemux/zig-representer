@@ -3,12 +3,13 @@ FROM registry.opensuse.org/opensuse/tumbleweed:latest as builder
 ARG ZIG_VERSION=0.10.1
 
 RUN zypper refresh && \
-    zypper install -y -f zig=$ZIG_VERSION
+    zypper install -y -f git zig=$ZIG_VERSION
 
 WORKDIR /representer
 COPY . .
 
-RUN zig build -Drelease-safe=true
+RUN git submodule update --init && \
+    zig build -Drelease-safe=true
 
 FROM registry.opensuse.org/opensuse/tumbleweed:latest
 

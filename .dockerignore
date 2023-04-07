@@ -12,10 +12,6 @@ result
 .direnv/
 .envrc
 
-# Git
-.gitignore
-.gitmodules
-
 # Zig
 zig-cache/
 zig-out/
