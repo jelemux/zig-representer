@@ -30,9 +30,7 @@
 
     in rec {
       devShells.default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [
-          docker
-        ];
+        nativeBuildInputs = with pkgs; [ ];
         buildInputs = with pkgs; [ z ];
       };
     });
