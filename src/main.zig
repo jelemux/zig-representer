@@ -14,8 +14,8 @@ pub fn main() !void {
 
     Logger.global_level = args.log_level;
 
-//    const stdout_file = std.io.getStdOut().writer();
-//    var logger = Logger.new(stdout_file, Logger.global_level);
+    // const stdout_file = std.io.getStdOut().writer();
+    // var logger = Logger.new(stdout_file, Logger.global_level);
 }
 
 test "emit methods docs" {

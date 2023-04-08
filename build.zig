@@ -41,7 +41,7 @@ pub fn build(b: *Builder) void {
     const docs_step = b.step("docs", "Generate docs");
     docs_step.dependOn(&docs.step);
 
-    const steps_with_dependencies = &[_]*LibExeObjStep{exe, exe_tests, docs};
+    const steps_with_dependencies = &[_]*LibExeObjStep{ exe, exe_tests, docs };
     configureSteps(steps_with_dependencies, target, mode);
 }
 
