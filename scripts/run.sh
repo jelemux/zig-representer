@@ -24,7 +24,7 @@ mkdir -p "${output_dir}"
 
 echo "${slug}: creating representation..."
 
-/opt/representer/bin/zig-representer --slug "${slug}" --input-dir "${input_dir}" --output-dir "${output_dir}"
+/opt/representer/bin/zig-representer --slug "${slug}" --input-dir "${input_dir}" --output-dir "${output_dir}" --log-level info
 
 # Exit if there an error occured while processing the solution files
 if [ $? -ne 0 ]; then

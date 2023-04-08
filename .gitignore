@@ -5,6 +5,7 @@
 # Zig
 zig-cache/
 zig-out/
+docs/
 
 # Nix & direnv
 .cache/
