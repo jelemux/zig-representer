@@ -14,5 +14,5 @@ test "should throw for missing arguments" {
     var cli = Cli.init(testing.allocator);
     defer cli.deinit();
 
-    try testing.expectError(Cli.CliError.MissingArgs, cli.parseAndValidateArgs());
+    try testing.expectError(Cli.CliError.MissingRequiredArgs, cli.parseAndValidateArgs());
 }
