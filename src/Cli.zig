@@ -1,3 +1,5 @@
+//! A wrapper around `App` specifically to the zig-representer.
+
 const Cli = @This();
 
 const std = @import("std");
@@ -9,6 +11,7 @@ const flag = yazap.flag;
 
 const Logger = @import("Logger.zig");
 
+/// The arguments the zig-representer CLI takes.
 pub const Args = struct {
     slug: []const u8,
     input_dir: []const u8,
@@ -31,6 +34,7 @@ pub fn init(allocator: Allocator) Cli {
     };
 }
 
+/// Adds all the args for zig-representer to the app.
 pub fn addArgs(self: *Cli) !void {
     var root = self.app.rootCommand();
     try root.addArg(flag.argOne("slug", 's', "[required] The slug of the exercise to be analyzed (e.g. 'reverse-string')."));
@@ -44,6 +48,7 @@ pub fn addArgs(self: *Cli) !void {
     }, "Defines the verbosity of the logging. Must be one of 'debug', 'info', 'warn' or 'error'."));
 }
 
+/// Parses, validates and returns the args.
 pub fn parseAndValidateArgs(self: *Cli) !Args {
     const root_args = try self.app.parseProcess();
 
@@ -63,6 +68,7 @@ pub fn parseAndValidateArgs(self: *Cli) !Args {
     };
 }
 
+/// Frees all the allocated memory of the app.
 pub fn deinit(self: *Cli) void {
     self.app.deinit();
 }
