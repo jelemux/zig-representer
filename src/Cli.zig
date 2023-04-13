@@ -72,7 +72,3 @@ pub fn parseAndValidateArgs(self: *Cli) !Args {
 pub fn deinit(self: *Cli) void {
     self.app.deinit();
 }
-
-test "emit methods docs" {
-    std.testing.refAllDecls(@This());
-}

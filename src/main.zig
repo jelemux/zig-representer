@@ -21,5 +21,5 @@ pub fn main() !void {
 }
 
 test "emit methods docs" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 }

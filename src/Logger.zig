@@ -18,7 +18,7 @@ const Color = enum(u8) {
     Reset = 0,
 
     /// Writes the matching ANSI escape code of this color to the given file.
-    fn print(self: Self, out: fs.File) !void {
+    fn print(self: Self, out: anytype) !void {
         try out.print("\x1b[{d}m", .{@enumToInt(self)});
     }
 };
@@ -86,8 +86,7 @@ pub fn log(self: *Logger, level: Level, comptime fmt: []const u8, args: anytype)
         return;
     }
 
-    var bw = std.io.bufferedWriter(self.file);
-    const out = bw.writer();
+    const out = self.file.writer();
     const is_tty = self.file.isTty();
 
     try out.print("{} [", .{std.time.timestamp()});
@@ -99,7 +98,7 @@ pub fn log(self: *Logger, level: Level, comptime fmt: []const u8, args: anytype)
     try out.print(fmt, args);
     _ = try out.write("\n");
 
-    try bw.flush();
+    try self.file.sync();
 }
 
 /// Logs with `Level.Debug` level.
@@ -122,6 +121,53 @@ pub fn err(self: *Logger, comptime fmt: []const u8, args: anytype) !void {
     try self.log(Level.Error, fmt, args);
 }
 
-test "emit methods docs" {
-    std.testing.refAllDecls(@This());
+test "Color.print() should write colors correctly to file" {
+    // given
+    var tmp_dir = std.testing.tmpDir(fs.Dir.OpenDirOptions{});
+    defer tmp_dir.cleanup();
+
+    var color_file = try tmp_dir.dir.createFile("colors.txt", fs.File.CreateFlags{.read = true});
+    defer color_file.close();
+
+    var colors = std.EnumSet(Color).initFull();
+    var color_iter = colors.iterator();
+
+    // when
+    while (color_iter.next()) |color| {
+        try color.print(color_file.writer());
+    }
+
+    // then
+    try color_file.sync();
+    try color_file.seekTo(0);
+
+    const allocator = std.testing.allocator;
+    const file_content = try color_file.readToEndAlloc(allocator, 100);
+    defer allocator.free(file_content);
+
+    try std.testing.expectEqualStrings("\x1b[0m\x1b[31m\x1b[32m\x1b[33m\x1b[36m", file_content);
+}
+
+test "should convert log-level to uppercase string" {
+    const expected_levels = [_][]const u8{"DEBUG", "INFO", "WARN", "ERROR"};
+
+    var levels = std.EnumSet(Logger.Level).initFull();
+    var level_iter = levels.iterator();
+
+    var i: usize = 0;
+    while (level_iter.next()) |level| : (i += 1) {
+        try std.testing.expectEqualStrings(expected_levels[i], level.toString());
+    }
+}
+
+test "should return correct color for log-level" {
+    const expected_colors = [_]Color{.Cyan, .Green, .Yellow, .Red};
+
+    var levels = std.EnumSet(Logger.Level).initFull();
+    var level_iter = levels.iterator();
+
+    var i: usize = 0;
+    while (level_iter.next()) |level| : (i += 1) {
+        try std.testing.expectEqual(expected_colors[i], level.color());
+    }
 }
