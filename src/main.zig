@@ -1,8 +1,8 @@
 const std = @import("std");
 const heap = std.heap;
 
-const Cli = @import("Cli.zig");
-const Logger = @import("Logger.zig");
+const Cli = @import("cmd/Cli.zig");
+const Logger = @import("pkg/Logger.zig");
 
 pub fn main() !void {
     var arena = heap.ArenaAllocator.init(heap.page_allocator);
@@ -12,12 +12,21 @@ pub fn main() !void {
     defer cli.deinit();
 
     try cli.addArgs();
-    const args = try cli.parseAndValidateArgs();
+    const args = cli.parseAndValidateArgs() catch |err| {
+        if (err == Cli.Error.MissingRequiredArgs) {
+            var logger = Logger.new(Logger.global_file, Logger.global_level);
+            try logger.err("Missing required arguments. See usage above.", .{});
+            return;
+        } else return err;
+    };
 
     Logger.global_level = args.log_level;
+    if (args.use_log_file) {
+        Logger.global_file = try std.fs.cwd().createFile("zig-representer.log", std.fs.File.CreateFlags{.read = true, .truncate = false});
+        try Logger.global_file.seekFromEnd(0);
+    }
 
-    // const stdout_file = std.io.getStdOut().writer();
-    // var logger = Logger.new(stdout_file, Logger.global_level);
+    // var logger = Logger.new(Logger.global_file, Logger.global_level);
 }
 
 test "emit methods docs" {

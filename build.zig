@@ -30,7 +30,7 @@ pub fn build(b: *Builder) void {
     run_step.dependOn(&run_cmd.step);
 
     // Build step to run tests
-    const exe_tests = b.addTest("src/test.zig");
+    const exe_tests = b.addTest("src/main.zig");
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&exe_tests.step);
 

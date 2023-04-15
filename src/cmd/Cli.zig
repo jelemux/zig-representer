@@ -9,7 +9,7 @@ const yazap = @import("yazap");
 const App = yazap.App;
 const flag = yazap.flag;
 
-const Logger = @import("Logger.zig");
+const Logger = @import("../pkg/Logger.zig");
 
 /// The arguments the zig-representer CLI takes.
 pub const Args = struct {
@@ -17,9 +17,10 @@ pub const Args = struct {
     input_dir: []const u8,
     output_dir: []const u8,
     log_level: Logger.Level,
+    use_log_file: bool,
 };
 
-pub const CliError = error{MissingRequiredArgs};
+pub const Error = error{MissingRequiredArgs};
 
 app: App,
 
@@ -40,6 +41,7 @@ pub fn addArgs(self: *Cli) !void {
     try root.addArg(flag.argOne("slug", 's', "[required] The slug of the exercise to be analyzed (e.g. 'reverse-string')."));
     try root.addArg(flag.argOne("input-dir", 'i', "[required] A path to a directory containing the submitted file(s)."));
     try root.addArg(flag.argOne("output-dir", 'o', "[required] A path to a directory where the representation should be written to."));
+    try root.addArg(flag.boolean("use-log-file", 'f', "Log to ./zig-representer.log instead of std output."));
     try root.addArg(flag.option("log-level", 'l', &[_][]const u8{
         "debug",
         "info",
@@ -54,21 +56,37 @@ pub fn parseAndValidateArgs(self: *Cli) !Args {
 
     if (!(root_args.isPresent("slug") and root_args.isPresent("input-dir") and root_args.isPresent("output_dir"))) {
         try self.app.displayHelp();
-        return CliError.MissingRequiredArgs;
+        return Error.MissingRequiredArgs;
     }
 
     const log_level_raw = root_args.valueOf("log-level") orelse "warn";
     const log_level = try Logger.Level.fromString(log_level_raw);
+    const use_log_file = root_args.isPresent("use-log-file");
 
     return Args{
         .slug = root_args.valueOf("slug").?,
         .input_dir = root_args.valueOf("input-dir").?,
         .output_dir = root_args.valueOf("output-dir").?,
         .log_level = log_level,
+        .use_log_file = use_log_file,
     };
 }
 
 /// Frees all the allocated memory of the app.
 pub fn deinit(self: *Cli) void {
     self.app.deinit();
+}
+
+test "should add arguments successfully" {
+    var cli = Cli.init(std.testing.allocator);
+    defer cli.deinit();
+
+    try cli.addArgs();
+}
+
+test "should throw for missing arguments" {
+    var cli = Cli.init(std.testing.allocator);
+    defer cli.deinit();
+
+    try std.testing.expectError(Cli.Error.MissingRequiredArgs, cli.parseAndValidateArgs());
 }
