@@ -1,9 +1,10 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+const r = @import("render.zig");
 const Logger = @import("Logger.zig");
 
-const NameMappings = std.StringHashMapUnmanaged([]const u8);
+pub const NameMappings = std.StringHashMapUnmanaged([]const u8);
 
 pub const Normalization = struct {
     const Self = @This();
@@ -23,9 +24,7 @@ pub fn normalize(allocator: Allocator, code: []const u8) !Normalization {
     var ast = try std.zig.parse(allocator, @ptrCast([:0]const u8, code));
     defer ast.deinit(allocator);
 
-    const normalized_code = try ast.render(allocator);
-    var mappings = NameMappings{};
-    return Normalization{.code = normalized_code, .mappings = mappings};
+    return r.renderNormalization(allocator, ast);
 }
 
 test "should remove top-level doc comments" {
