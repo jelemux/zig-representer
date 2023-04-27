@@ -1,14 +1,14 @@
 const std = @import("std");
-const heap = std.heap;
+const Gpa = std.heap.GeneralPurposeAllocator(.{});
 
 const Cli = @import("cmd/Cli.zig");
 const Logger = @import("pkg/Logger.zig");
 
 pub fn main() !void {
-    var arena = heap.ArenaAllocator.init(heap.page_allocator);
-    defer arena.deinit();
+    var gpa = Gpa{};
+    defer _ = gpa.deinit();
 
-    var cli = Cli.init(arena.allocator());
+    var cli = Cli.init(gpa.allocator());
     defer cli.deinit();
 
     try cli.addArgs();
