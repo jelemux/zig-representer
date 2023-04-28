@@ -10,7 +10,8 @@ pub fn mapName(mappings: *NameMappings, name: []const u8) Allocator.Error![]cons
         return placeholder;
     } else {
         const placeholder: []const u8 = try std.fmt.allocPrint(mappings.allocator, "placeholder_{d}", .{mappings.count()});
-        try mappings.put(name, placeholder);
+        const dupedName = try mappings.allocator.dupe(u8, name);
+        try mappings.put(dupedName, placeholder);
         return placeholder;
     }
 }
@@ -23,9 +24,14 @@ pub const Normalization = struct {
     pub fn deinit(self: *Self, allocator: Allocator) void {
         allocator.free(self.code);
 
+        var valueIter = self.mappings.valueIterator();
+        while (valueIter.next()) |value| {
+            allocator.free(value.*);
+        }
+
         var keyIter = self.mappings.keyIterator();
-        while (keyIter.next()) |key| : (keyIter = self.mappings.keyIterator()) {
-            self.mappings.allocator.free(key.*);
+        while (keyIter.next()) |key| {
+            allocator.free(key.*);
         }
         self.mappings.deinit();
     }
