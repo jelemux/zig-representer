@@ -1,7 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const renderNormalization = @import("render.zig").renderNormalization;
+const renderTree = @import("render.zig").renderTree;
 
 pub const NameMappings = std.StringHashMap([]const u8);
 
@@ -38,11 +38,18 @@ pub const Normalization = struct {
 };
 
 /// Creates a normalized representation of the given Zig code.
-pub fn normalize(allocator: Allocator, code: []const u8) !Normalization {
-    var ast = try std.zig.parse(allocator, @ptrCast([:0]const u8, code));
-    defer ast.deinit(allocator);
+pub fn normalize(gpa: Allocator, code: []const u8) !Normalization {
+    var ast = try std.zig.parse(gpa, @ptrCast([:0]const u8, code));
+    defer ast.deinit(gpa);
 
-    return renderNormalization(allocator, ast);
+    var mappings = NameMappings.init(gpa);
+    var buffer = std.ArrayList(u8).init(gpa);
+    defer buffer.deinit();
+
+    try renderTree(&buffer, ast, &mappings);
+
+    const normalized_code = buffer.toOwnedSlice();
+    return Normalization{.code = normalized_code, .mappings = mappings};
 }
 
 test "should remove top-level doc comments" {

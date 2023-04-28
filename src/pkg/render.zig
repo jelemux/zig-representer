@@ -13,20 +13,10 @@ pub const Error = Ast.RenderError;
 const Ais = AutoIndentingStream(std.ArrayList(u8).Writer);
 
 const n = @import("normalize.zig");
+const NameMappings = n.NameMappings;
 
 /// Render a normalized version of the tree.
-pub fn renderNormalization(gpa: Allocator, tree: Ast) !n.Normalization {
-    var mappings = n.NameMappings.init(gpa);
-    var buffer = std.ArrayList(u8).init(gpa);
-    defer buffer.deinit();
-
-    try renderTree(&buffer, tree, &mappings);
-
-    const normalized_code = buffer.toOwnedSlice();
-    return n.Normalization{.code = normalized_code, .mappings = mappings};
-}
-
-fn renderTree(buffer: *std.ArrayList(u8), tree: Ast, mappings: *n.NameMappings) Error!void {
+pub fn renderTree(buffer: *std.ArrayList(u8), tree: Ast, mappings: *NameMappings) Error!void {
     assert(tree.errors.len == 0); // Cannot render an invalid tree.
     var auto_indenting_stream = Ais{
         .indent_delta = indent_delta,
@@ -42,7 +32,7 @@ fn renderTree(buffer: *std.ArrayList(u8), tree: Ast, mappings: *n.NameMappings) 
 }
 
 /// Render all members in the given slice, keeping empty lines where appropriate
-fn renderMembers(gpa: Allocator, ais: *Ais, tree: Ast, members: []const Ast.Node.Index, mappings: *n.NameMappings) Error!void {
+fn renderMembers(gpa: Allocator, ais: *Ais, tree: Ast, members: []const Ast.Node.Index, mappings: *NameMappings) Error!void {
     if (members.len == 0) return;
     try renderMember(gpa, ais, tree, members[0], .newline, mappings);
     for (members[1..]) |member| {
@@ -51,7 +41,7 @@ fn renderMembers(gpa: Allocator, ais: *Ais, tree: Ast, members: []const Ast.Node
     }
 }
 
-fn renderMember(gpa: Allocator, ais: *Ais, tree: Ast, decl: Ast.Node.Index, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderMember(gpa: Allocator, ais: *Ais, tree: Ast, decl: Ast.Node.Index, space: Space, mappings: *NameMappings) Error!void {
     const token_tags = tree.tokens.items(.tag);
     const main_tokens = tree.nodes.items(.main_token);
     const datas = tree.nodes.items(.data);
@@ -173,7 +163,7 @@ fn renderMember(gpa: Allocator, ais: *Ais, tree: Ast, decl: Ast.Node.Index, spac
 }
 
 /// Render all expressions in the slice, keeping empty lines where appropriate
-fn renderExpressions(gpa: Allocator, ais: *Ais, tree: Ast, expressions: []const Ast.Node.Index, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderExpressions(gpa: Allocator, ais: *Ais, tree: Ast, expressions: []const Ast.Node.Index, space: Space, mappings: *NameMappings) Error!void {
     if (expressions.len == 0) return;
     try renderExpression(gpa, ais, tree, expressions[0], space, mappings);
     for (expressions[1..]) |expression| {
@@ -182,7 +172,7 @@ fn renderExpressions(gpa: Allocator, ais: *Ais, tree: Ast, expressions: []const 
     }
 }
 
-fn renderExpression(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node.Index, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderExpression(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node.Index, space: Space, mappings: *NameMappings) Error!void {
     const token_tags = tree.tokens.items(.tag);
     const main_tokens = tree.nodes.items(.main_token);
     const node_tags = tree.nodes.items(.tag);
@@ -731,7 +721,7 @@ fn renderArrayType(
     tree: Ast,
     array_type: Ast.full.ArrayType,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const rbracket = tree.firstToken(array_type.ast.elem_type) - 1;
     const one_line = tree.tokensOnSameLine(array_type.ast.lbracket, rbracket);
@@ -754,7 +744,7 @@ fn renderPtrType(
     tree: Ast,
     ptr_type: Ast.full.PtrType,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     switch (ptr_type.size) {
         .One => {
@@ -849,7 +839,7 @@ fn renderSlice(
     slice_node: Ast.Node.Index,
     slice: Ast.full.Slice,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const node_tags = tree.nodes.items(.tag);
     const after_start_space_bool = nodeCausesSliceOpSpace(node_tags[slice.ast.start]) or
@@ -885,7 +875,7 @@ fn renderAsmOutput(
     tree: Ast,
     asm_output: Ast.Node.Index,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const token_tags = tree.tokens.items(.tag);
     const node_tags = tree.nodes.items(.tag);
@@ -916,7 +906,7 @@ fn renderAsmInput(
     tree: Ast,
     asm_input: Ast.Node.Index,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const node_tags = tree.nodes.items(.tag);
     const main_tokens = tree.nodes.items(.main_token);
@@ -933,7 +923,7 @@ fn renderAsmInput(
     return renderToken(ais, tree, datas[asm_input].rhs, space, mappings); // rparen
 }
 
-fn renderVarDecl(gpa: Allocator, ais: *Ais, tree: Ast, var_decl: Ast.full.VarDecl, mappings: *n.NameMappings) Error!void {
+fn renderVarDecl(gpa: Allocator, ais: *Ais, tree: Ast, var_decl: Ast.full.VarDecl, mappings: *NameMappings) Error!void {
     if (var_decl.visib_token) |visib_token| {
         try renderToken(ais, tree, visib_token, Space.space, mappings); // pub
     }
@@ -1040,7 +1030,7 @@ fn renderVarDecl(gpa: Allocator, ais: *Ais, tree: Ast, var_decl: Ast.full.VarDec
     return renderToken(ais, tree, var_decl.ast.mut_token + 2, .newline, mappings); // ;
 }
 
-fn renderIf(gpa: Allocator, ais: *Ais, tree: Ast, if_node: Ast.full.If, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderIf(gpa: Allocator, ais: *Ais, tree: Ast, if_node: Ast.full.If, space: Space, mappings: *NameMappings) Error!void {
     return renderWhile(gpa, ais, tree, .{
         .ast = .{
             .while_token = if_node.ast.if_token,
@@ -1059,7 +1049,7 @@ fn renderIf(gpa: Allocator, ais: *Ais, tree: Ast, if_node: Ast.full.If, space: S
 
 /// Note that this function is additionally used to render if and for expressions, with
 /// respective values set to null.
-fn renderWhile(gpa: Allocator, ais: *Ais, tree: Ast, while_node: Ast.full.While, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderWhile(gpa: Allocator, ais: *Ais, tree: Ast, while_node: Ast.full.While, space: Space, mappings: *NameMappings) Error!void {
     const node_tags = tree.nodes.items(.tag);
     const token_tags = tree.tokens.items(.tag);
 
@@ -1167,7 +1157,7 @@ fn renderContainerField(
     tree: Ast,
     field: Ast.full.ContainerField,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     if (field.comptime_token) |t| {
         try renderToken(ais, tree, t, .space, mappings); // comptime
@@ -1243,7 +1233,7 @@ fn renderBuiltinCall(
     builtin_token: Ast.TokenIndex,
     params: []const Ast.Node.Index,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const token_tags = tree.tokens.items(.tag);
 
@@ -1298,7 +1288,7 @@ fn renderBuiltinCall(
     }
 }
 
-fn renderFnProto(gpa: Allocator, ais: *Ais, tree: Ast, fn_proto: Ast.full.FnProto, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderFnProto(gpa: Allocator, ais: *Ais, tree: Ast, fn_proto: Ast.full.FnProto, space: Space, mappings: *NameMappings) Error!void {
     const token_tags = tree.tokens.items(.tag);
     const token_starts = tree.tokens.items(.start);
 
@@ -1519,7 +1509,7 @@ fn renderSwitchCase(
     tree: Ast,
     switch_case: Ast.full.SwitchCase,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const node_tags = tree.nodes.items(.tag);
     const token_tags = tree.tokens.items(.tag);
@@ -1585,7 +1575,7 @@ fn renderBlock(
     block_node: Ast.Node.Index,
     statements: []const Ast.Node.Index,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const token_tags = tree.tokens.items(.tag);
     const node_tags = tree.nodes.items(.tag);
@@ -1626,7 +1616,7 @@ fn renderStructInit(
     struct_node: Ast.Node.Index,
     struct_init: Ast.full.StructInit,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const token_tags = tree.tokens.items(.tag);
     if (struct_init.ast.type_expr == 0) {
@@ -1685,7 +1675,7 @@ fn renderArrayInit(
     tree: Ast,
     array_init: Ast.full.ArrayInit,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const token_tags = tree.tokens.items(.tag);
 
@@ -1906,7 +1896,7 @@ fn renderContainerDecl(
     container_decl_node: Ast.Node.Index,
     container_decl: Ast.full.ContainerDecl,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const token_tags = tree.tokens.items(.tag);
     const node_tags = tree.nodes.items(.tag);
@@ -2007,7 +1997,7 @@ fn renderAsm(
     tree: Ast,
     asm_node: Ast.full.Asm,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const token_tags = tree.tokens.items(.tag);
 
@@ -2167,7 +2157,7 @@ fn renderCall(
     tree: Ast,
     call: Ast.full.Call,
     space: Space,
-    mappings: *n.NameMappings,
+    mappings: *NameMappings,
 ) Error!void {
     const token_tags = tree.tokens.items(.tag);
 
@@ -2238,7 +2228,7 @@ fn renderCall(
 
 /// Renders the given expression indented, popping the indent before rendering
 /// any following line comments
-fn renderExpressionIndented(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node.Index, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderExpressionIndented(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node.Index, space: Space, mappings: *NameMappings) Error!void {
     const token_tags = tree.tokens.items(.tag);
 
     ais.pushIndent();
@@ -2292,7 +2282,7 @@ fn renderExpressionIndented(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node
 
 /// Render an expression, and the comma that follows it, if it is present in the source.
 /// If a comma is present, and `space` is `Space.comma`, render only a single comma.
-fn renderExpressionComma(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node.Index, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderExpressionComma(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node.Index, space: Space, mappings: *NameMappings) Error!void {
     const token_tags = tree.tokens.items(.tag);
     const maybe_comma = tree.lastToken(node) + 1;
     if (token_tags[maybe_comma] == .comma and space != .comma) {
@@ -2305,7 +2295,7 @@ fn renderExpressionComma(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node.In
 
 /// Render a token, and the comma that follows it, if it is present in the source.
 /// If a comma is present, and `space` is `Space.comma`, render only a single comma.
-fn renderTokenComma(ais: *Ais, tree: Ast, token: Ast.TokenIndex, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderTokenComma(ais: *Ais, tree: Ast, token: Ast.TokenIndex, space: Space, mappings: *NameMappings) Error!void {
     const token_tags = tree.tokens.items(.tag);
     const maybe_comma = token + 1;
     if (token_tags[maybe_comma] == .comma and space != .comma) {
@@ -2337,13 +2327,13 @@ const Space = enum {
     skip,
 };
 
-fn renderToken(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderToken(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, space: Space, mappings: *NameMappings) Error!void {
     const lexeme = try tokenSliceForRender(tree, token_index, mappings);
     try ais.writer().writeAll(lexeme);
     try renderSpace(ais, tree, token_index, space, mappings);
 }
 
-fn renderSpace(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, space: Space, mappings: *n.NameMappings) Error!void {
+fn renderSpace(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, space: Space, mappings: *NameMappings) Error!void {
     const token_tags = tree.tokens.items(.tag);
 
     if (space == .skip) return;
@@ -2411,12 +2401,12 @@ fn hasMultilineString(tree: Ast, start_token: Ast.TokenIndex, end_token: Ast.Tok
     return false;
 }
 
-fn renderExtraNewline(ais: *Ais, tree: Ast, node: Ast.Node.Index, mappings: *n.NameMappings) Error!void {
+fn renderExtraNewline(ais: *Ais, tree: Ast, node: Ast.Node.Index, mappings: *NameMappings) Error!void {
     return renderExtraNewlineToken(ais, tree, tree.firstToken(node), mappings);
 }
 
 /// Check if there is an empty line immediately before the given token. If so, render it.
-fn renderExtraNewlineToken(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, mappings: *n.NameMappings) Error!void {
+fn renderExtraNewlineToken(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, mappings: *NameMappings) Error!void {
     const token_starts = tree.tokens.items(.start);
     const token_start = token_starts[token_index];
     if (token_start == 0) return;
@@ -2439,7 +2429,7 @@ fn renderExtraNewlineToken(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, ma
     }
 }
 
-fn tokenSliceForRender(tree: Ast, token_index: Ast.TokenIndex, mappings: *n.NameMappings) Error![]const u8 {
+fn tokenSliceForRender(tree: Ast, token_index: Ast.TokenIndex, mappings: *NameMappings) Error![]const u8 {
     var ret = tree.tokenSlice(token_index);
     switch (tree.tokens.items(.tag)[token_index]) {
         .multiline_string_literal_line => {
