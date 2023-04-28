@@ -16,7 +16,7 @@ const n = @import("normalize.zig");
 
 /// Render a normalized version of the tree.
 pub fn renderNormalization(gpa: Allocator, tree: Ast) !n.Normalization {
-    var mappings = n.NameMappings{};
+    var mappings = n.NameMappings.init(gpa);
     var buffer = std.ArrayList(u8).init(gpa);
     defer buffer.deinit();
 
@@ -193,7 +193,7 @@ fn renderExpression(gpa: Allocator, ais: *Ais, tree: Ast, node: Ast.Node.Index, 
         .identifier => {
             const token_index = main_tokens[node];
 
-            const lexeme = tokenSliceForRender(tree, token_index, mappings);
+            const lexeme = try tokenSliceForRender(tree, token_index, mappings);
             if (mem.eql(u8, lexeme, "c_void")) {
                 try ais.writer().writeAll("anyopaque");
             } else {
@@ -2338,7 +2338,7 @@ const Space = enum {
 };
 
 fn renderToken(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, space: Space, mappings: *n.NameMappings) Error!void {
-    const lexeme = tokenSliceForRender(tree, token_index, mappings);
+    const lexeme = try tokenSliceForRender(tree, token_index, mappings);
     try ais.writer().writeAll(lexeme);
     try renderSpace(ais, tree, token_index, space, mappings);
 }
@@ -2423,7 +2423,7 @@ fn renderExtraNewlineToken(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, ma
     const prev_token_end = if (token_index == 0)
         0
     else
-        token_starts[token_index - 1] + tokenSliceForRender(tree, token_index - 1, mappings).len;
+        token_starts[token_index - 1] + (try tokenSliceForRender(tree, token_index - 1, mappings)).len;
 
     // If there is a comment present, it will handle the empty line
     if (mem.indexOf(u8, tree.source[prev_token_end..token_start], "//") != null) return;
@@ -2439,7 +2439,7 @@ fn renderExtraNewlineToken(ais: *Ais, tree: Ast, token_index: Ast.TokenIndex, ma
     }
 }
 
-fn tokenSliceForRender(tree: Ast, token_index: Ast.TokenIndex, mappings: *n.NameMappings) []const u8 {
+fn tokenSliceForRender(tree: Ast, token_index: Ast.TokenIndex, mappings: *n.NameMappings) Error![]const u8 {
     var ret = tree.tokenSlice(token_index);
     switch (tree.tokens.items(.tag)[token_index]) {
         .multiline_string_literal_line => {
@@ -2450,7 +2450,7 @@ fn tokenSliceForRender(tree: Ast, token_index: Ast.TokenIndex, mappings: *n.Name
             ret = mem.trimRight(u8, ret, &std.ascii.spaces);
         },
         .identifier => {
-            _ = mappings;
+            ret = try n.mapName(mappings, ret);
         },
         else => {},
     }

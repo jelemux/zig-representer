@@ -1,10 +1,19 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const r = @import("render.zig");
-const Logger = @import("Logger.zig");
+const renderNormalization = @import("render.zig").renderNormalization;
 
-pub const NameMappings = std.StringHashMapUnmanaged([]const u8);
+pub const NameMappings = std.StringHashMap([]const u8);
+
+pub fn mapName(mappings: *NameMappings, name: []const u8) Allocator.Error![]const u8 {
+    if (mappings.get(name)) |placeholder| {
+        return placeholder;
+    } else {
+        const placeholder: []const u8 = try std.fmt.allocPrint(mappings.allocator, "placeholder_{d}", .{mappings.count()});
+        try mappings.put(name, placeholder);
+        return placeholder;
+    }
+}
 
 pub const Normalization = struct {
     const Self = @This();
@@ -13,18 +22,21 @@ pub const Normalization = struct {
 
     pub fn deinit(self: *Self, allocator: Allocator) void {
         allocator.free(self.code);
-        self.mappings.deinit(allocator);
+
+        var keyIter = self.mappings.keyIterator();
+        while (keyIter.next()) |key| : (keyIter = self.mappings.keyIterator()) {
+            self.mappings.allocator.free(key.*);
+        }
+        self.mappings.deinit();
     }
 };
 
 /// Creates a normalized representation of the given Zig code.
 pub fn normalize(allocator: Allocator, code: []const u8) !Normalization {
-    //var logger = Logger.new(Logger.global_file, Logger.global_level);
-
     var ast = try std.zig.parse(allocator, @ptrCast([:0]const u8, code));
     defer ast.deinit(allocator);
 
-    return r.renderNormalization(allocator, ast);
+    return renderNormalization(allocator, ast);
 }
 
 test "should remove top-level doc comments" {
@@ -57,11 +69,12 @@ test "should rename const declarations" {
 
     // then
     const expectedCode: []const u8 =
-        \\const placeholder_1 = @import("std");
+        \\const placeholder_0 = @import("std");
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
     try std.testing.expectEqual(@as(u32, 1), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "std"), representation.mappings.get("placeholder_1").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("std").?);
 }
 
 test "should not rename main function" {
