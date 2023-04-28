@@ -83,7 +83,7 @@ test "should rename const declarations" {
     try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("std").?);
 }
 
-test "should not rename main function" {
+test "should rename main function" {
     // given
     const input =
         \\pub fn main() !void {
@@ -97,11 +97,13 @@ test "should not rename main function" {
 
     // then
     const expectedCode: []const u8 =
-        \\pub fn main() !void {
-        \\}
+        \\pub fn placeholder_0() !placeholder_1 {}
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
-    try std.testing.expectEqual(@as(u32, 0), representation.mappings.count());
+    try std.testing.expectEqual(@as(u32, 2), representation.mappings.count());
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("main").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_1"), representation.mappings.get("void").?);
 }
 
 test "should rename function" {
@@ -118,12 +120,13 @@ test "should rename function" {
 
     // then
     const expectedCode: []const u8 =
-        \\pub fn placeholder_1() !void {
-        \\}
+        \\pub fn placeholder_0() !placeholder_1 {}
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
-    try std.testing.expectEqual(@as(u32, 1), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "helloWorld"), representation.mappings.get("placeholder_1").?);
+    try std.testing.expectEqual(@as(u32, 2), representation.mappings.count());
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("helloWorld").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_1"), representation.mappings.get("void").?);
 }
 
 test "should remove doc comment" {
@@ -140,9 +143,14 @@ test "should remove doc comment" {
     defer representation.deinit(allocator);
 
     // then
-    const expectedCode: []const u8 = "pub fn main() !void {}\n";
+    const expectedCode: []const u8 =
+        \\pub fn placeholder_0() !placeholder_1 {}
+        \\
+    ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
-    try std.testing.expectEqual(@as(u32, 0), representation.mappings.count());
+    try std.testing.expectEqual(@as(u32, 2), representation.mappings.count());
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("main").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_1"), representation.mappings.get("void").?);
 }
 
 test "should remove comment" {
@@ -175,11 +183,12 @@ test "should rename var" {
 
     // then
     const expectedCode: []const u8 =
-        \\var placeholder_1 = "";
+        \\var placeholder_0 = "";
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
     try std.testing.expectEqual(@as(u32, 1), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "something"), representation.mappings.get("placeholder_1").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("something").?);
 }
 
 test "should rename var usage" {
@@ -198,14 +207,17 @@ test "should rename var usage" {
 
     // then
     const expectedCode: []const u8 =
-        \\var placeholder_1 = "";
-        \\pub fn main() !void {
-        \\    placeholder_1 = "asdf";
+        \\var placeholder_0 = "";
+        \\pub fn placeholder_1() !placeholder_2 {
+        \\    placeholder_0 = "asdf";
         \\}
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
-    try std.testing.expectEqual(@as(u32, 1), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "something"), representation.mappings.get("placeholder_1").?);
+    try std.testing.expectEqual(@as(u32, 3), representation.mappings.count());
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("something").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_1"), representation.mappings.get("main").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_2"), representation.mappings.get("void").?);
 }
 
 test "should rename struct fields" {
@@ -223,14 +235,16 @@ test "should rename struct fields" {
 
     // then
     const expectedCode: []const u8 =
-        \\const placeholder_1 = struct {
-        \\    placeholder_2: u32,
+        \\const placeholder_0 = struct {
+        \\    placeholder_1: placeholder_2,
         \\};
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
-    try std.testing.expectEqual(@as(u32, 2), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "something"), representation.mappings.get("placeholder_1").?);
-    try std.testing.expectEqualStrings(@as([]const u8, "some_field"), representation.mappings.get("placeholder_2").?);
+    try std.testing.expectEqual(@as(u32, 3), representation.mappings.count());
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("something").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_1"), representation.mappings.get("some_field").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_2"), representation.mappings.get("u32").?);
 }
 
 test "should rename enum variants" {
@@ -249,16 +263,17 @@ test "should rename enum variants" {
 
     // then
     const expectedCode: []const u8 =
-        \\const placeholder_1 = enum {
+        \\const placeholder_0 = enum {
+        \\    placeholder_1,
         \\    placeholder_2,
-        \\    placeholder_3,
         \\};
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
     try std.testing.expectEqual(@as(u32, 3), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "something"), representation.mappings.get("placeholder_1").?);
-    try std.testing.expectEqualStrings(@as([]const u8, "ok"), representation.mappings.get("placeholder_2").?);
-    try std.testing.expectEqualStrings(@as([]const u8, "not_ok"), representation.mappings.get("placeholder_3").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("something").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_1"), representation.mappings.get("ok").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_2"), representation.mappings.get("not_ok").?);
 }
 
 test "should rename union variants" {
@@ -278,18 +293,22 @@ test "should rename union variants" {
 
     // then
     const expectedCode: []const u8 =
-        \\const placeholder_1 = union {
-        \\    placeholder_2: i64,
-        \\    placeholder_3: f64,
-        \\    placeholder_4: bool,
+        \\const placeholder_0 = union {
+        \\    placeholder_1: placeholder_2,
+        \\    placeholder_3: placeholder_4,
+        \\    placeholder_5: placeholder_6,
         \\};
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
-    try std.testing.expectEqual(@as(u32, 4), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "something"), representation.mappings.get("placeholder_1").?);
-    try std.testing.expectEqualStrings(@as([]const u8, "int"), representation.mappings.get("placeholder_2").?);
-    try std.testing.expectEqualStrings(@as([]const u8, "float"), representation.mappings.get("placeholder_3").?);
-    try std.testing.expectEqualStrings(@as([]const u8, "boolean"), representation.mappings.get("placeholder_4").?);
+    try std.testing.expectEqual(@as(u32, 7), representation.mappings.count());
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("something").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_1"), representation.mappings.get("int").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_2"), representation.mappings.get("i64").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_3"), representation.mappings.get("float").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_4"), representation.mappings.get("f64").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_5"), representation.mappings.get("boolean").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_6"), representation.mappings.get("bool").?);
 }
 
 test "should normalize hello world" {
@@ -319,18 +338,27 @@ test "should normalize hello world" {
 
     // then
     const expectedCode: []const u8 =
-        \\const placeholder_1 = @import("std");
-        \\pub fn main() !void {
-        \\    try placeholder_2();
+        \\const placeholder_0 = @import("std");
+        \\
+        \\pub fn placeholder_1() !placeholder_2 {
+        \\    try placeholder_3();
         \\}
-        \\pub fn placeholder_2() !void {
-        \\    const placeholder_3 = placeholder_1.io.getStdOut().writer();
-        \\    try placeholder_3.print("Hello, {s}!\n", .{"world"});
+        \\pub fn placeholder_3() !placeholder_2 {
+        \\    const placeholder_4 = placeholder_0.placeholder_5.placeholder_6().placeholder_7();
+        \\    try placeholder_4.placeholder_8("Hello, {s}!\n", .{"world"});
         \\}
+        \\
     ;
     try std.testing.expectEqualStrings(expectedCode, representation.code);
-    try std.testing.expectEqual(@as(u32, 3), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "std"), representation.mappings.get("placeholder_1").?);
-    try std.testing.expectEqualStrings(@as([]const u8, "helloWorld"), representation.mappings.get("placeholder_2").?);
-    try std.testing.expectEqualStrings(@as([]const u8, "stdout"), representation.mappings.get("placeholder_3").?);
+    try std.testing.expectEqual(@as(u32, 9), representation.mappings.count());
+
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_0"), representation.mappings.get("std").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_1"), representation.mappings.get("main").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_2"), representation.mappings.get("void").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_3"), representation.mappings.get("helloWorld").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_4"), representation.mappings.get("stdout").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_5"), representation.mappings.get("io").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_6"), representation.mappings.get("getStdOut").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_7"), representation.mappings.get("writer").?);
+    try std.testing.expectEqualStrings(@as([]const u8, "placeholder_8"), representation.mappings.get("print").?);
 }
