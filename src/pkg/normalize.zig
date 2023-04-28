@@ -110,8 +110,8 @@ test "should rename function" {
 test "should remove doc comment" {
     // given
     const input =
-        \\/// Prints "Hello, World!" to std out.
-        \\pub fn helloWorld() !void {
+        \\/// The main method.
+        \\pub fn main() !void {
         \\}
     ;
     const allocator = std.testing.allocator;
@@ -121,13 +121,9 @@ test "should remove doc comment" {
     defer representation.deinit(allocator);
 
     // then
-    const expectedCode: []const u8 =
-        \\pub fn placeholder_1() !void {
-        \\}
-    ;
+    const expectedCode: []const u8 = "pub fn main() !void {}\n";
     try std.testing.expectEqualStrings(expectedCode, representation.code);
-    try std.testing.expectEqual(@as(u32, 1), representation.mappings.count());
-    try std.testing.expectEqualStrings(@as([]const u8, "helloWorld"), representation.mappings.get("placeholder_1").?);
+    try std.testing.expectEqual(@as(u32, 0), representation.mappings.count());
 }
 
 test "should remove comment" {
