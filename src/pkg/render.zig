@@ -2440,7 +2440,7 @@ fn tokenSliceForRender(tree: Ast, token_index: Ast.TokenIndex, mappings: *NameMa
             ret = mem.trimRight(u8, ret, &std.ascii.spaces);
         },
         .identifier => {
-            ret = try n.mapName(mappings, ret);
+            ret = try mappings.mapName(ret);
         },
         else => {},
     }
