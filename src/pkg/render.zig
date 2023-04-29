@@ -12,8 +12,7 @@ const asm_indent_delta = 2;
 pub const Error = Ast.RenderError;
 const Ais = AutoIndentingStream(std.ArrayList(u8).Writer);
 
-const n = @import("normalize.zig");
-const NameMappings = n.NameMappings;
+const NameMappings = @import("NameMappings.zig");
 
 /// Render a normalized version of the tree.
 pub fn renderTree(buffer: *std.ArrayList(u8), tree: Ast, mappings: *NameMappings) Error!void {

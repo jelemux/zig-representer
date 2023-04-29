@@ -1,50 +1,8 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+const NameMappings = @import("NameMappings.zig");
 const renderTree = @import("render.zig").renderTree;
-
-pub const NameMappings = struct {
-    replacements: std.StringHashMap([]const u8),
-
-    pub fn init(gpa: Allocator) NameMappings {
-        return NameMappings{
-            .replacements = std.StringHashMap([]const u8).init(gpa),
-        };
-    }
-
-    pub fn get(self: *NameMappings, name: []const u8) ?[]const u8 {
-        return self.replacements.get(name);
-    }
-
-    pub fn count(self: *NameMappings) u32 {
-        return self.replacements.count();
-    }
-
-    pub fn mapName(self: *NameMappings, name: []const u8) Allocator.Error![]const u8 {
-        if (self.replacements.get(name)) |placeholder| {
-            return placeholder;
-        } else {
-            const placeholder: []const u8 = try std.fmt.allocPrint(self.replacements.allocator, "placeholder_{d}", .{self.replacements.count()});
-            const dupedName = try self.replacements.allocator.dupe(u8, name);
-            try self.replacements.put(dupedName, placeholder);
-            return placeholder;
-        }
-    }
-
-    pub fn deinit(self: *NameMappings) void {
-        var valueIter = self.replacements.valueIterator();
-        while (valueIter.next()) |value| {
-            self.replacements.allocator.free(value.*);
-        }
-
-        var keyIter = self.replacements.keyIterator();
-        while (keyIter.next()) |key| {
-            self.replacements.allocator.free(key.*);
-        }
-
-        self.replacements.deinit();
-    }
-};
 
 pub const Normalization = struct {
     const Self = @This();
@@ -58,7 +16,7 @@ pub const Normalization = struct {
 };
 
 /// Creates a normalized representation of the given Zig code.
-pub fn normalize(gpa: Allocator, code: []const u8) !Normalization {
+pub fn normalize(gpa: Allocator, code: []const u8) Allocator.Error!Normalization {
     var ast = try std.zig.parse(gpa, @ptrCast([:0]const u8, code));
     defer ast.deinit(gpa);
 
