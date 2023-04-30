@@ -11,3 +11,7 @@ docs/
 .cache/
 .direnv/
 result
+
+# Other
+test-output
+!test-output/.gitkeep
