@@ -3,6 +3,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const fs = std.fs;
+const json = std.json;
 
 const normalize = @import("pkg/normalize.zig").normalize;
 
@@ -13,8 +14,7 @@ pub fn represent(
     input_path: []const u8,
     output_path: []const u8
 ) !void {
-    _ = output_path;
-
+    // open input dir
     var input_is_absolute = true;
     std.fs.accessAbsolute(input_path, .{}) catch |err| {
         if (err == error.FileNotFound) {
@@ -24,7 +24,6 @@ pub fn represent(
         }
     };
 
-    // open input dir
     var input_dir = if (input_is_absolute)
         try std.fs.openIterableDirAbsolute(input_path, .{})
     else
@@ -42,13 +41,35 @@ pub fn represent(
 
     // create normalization
     var normalization = try normalize(gpa, files_contents.items);
-    _ = normalization;
+    defer normalization.deinit(gpa);
 
     // open output dir
+    var output_is_absolute = true;
+    std.fs.accessAbsolute(output_path, .{}) catch |err| {
+        if (err == error.FileNotFound) {
+            output_is_absolute = false;
+        } else {
+            return err;
+        }
+    };
+    var output_dir = if (output_is_absolute)
+        try std.fs.openDirAbsolute(output_path, .{})
+    else
+        try std.fs.cwd().openDir(output_path, .{})
+    ;
+
     // write representation.txt to output dir
+    try output_dir.writeFile("representation.txt", normalization.representation);
+
     // write mapping.json to to output dir
+    const mappingJson = try normalization.mappings.toJson();
+    defer gpa.free(mappingJson);
+    try output_dir.writeFile("mapping.json", mappingJson);
+
     // write representation.json to output dir
-    // TODO
+    const representationJson = try json.stringifyAlloc(gpa, RepresentationJson{}, json.StringifyOptions{ .whitespace = .{} });
+    defer gpa.free(representationJson);
+    try output_dir.writeFile("representation.json", representationJson);
 }
 
 /// Reads file contents from all subdirectories.
