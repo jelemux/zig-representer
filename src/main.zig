@@ -28,11 +28,11 @@ pub fn main() !void {
     }
 
     var logger = Logger.new(Logger.global_file, Logger.global_level);
-    try logger.info("Creating representation...", .{});
+    try logger.info("Creating representation for exercise '{s}'.", .{args.slug});
 
-    represent(gpa.allocator(), args.slug, args.input_dir, args.output_dir) catch |err| {
-        try logger.err("Could not create representation: {s}", .{err});
-        std.os.exit(1);
+    represent(gpa.allocator(), args.input_dir, args.output_dir) catch |err| {
+        try logger.err("Failed to create representation for exercise '{s}': {s}", .{args.slug, @errorName(err)});
+        return err;
     };
 
     try logger.info("Finished representation.", .{});
