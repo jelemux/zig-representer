@@ -52,4 +52,4 @@ docker run -v "$PWD:/mnt" exercism/zig-representer:<version> "two-fer" "/mnt/tes
 - Sort top level declarations (imports, types, constants, variables, functions)
 - Better error handling (maybe like [yazap][yazap-err]?)
 
-[yazap-err]: ./libs/yazap/src/error.zig
+[yazap-err]: https://github.com/PrajwalCH/yazap/blob/main/src/error.zig
