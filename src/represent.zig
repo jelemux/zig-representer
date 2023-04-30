@@ -1,5 +1,3 @@
-//! Contains the main execution logic to implement the representer interface.
-//! See https://github.com/exercism/docs/blob/main/building/tooling/representers/interface.md
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const fs = std.fs;
@@ -9,6 +7,8 @@ const normalize = @import("pkg/normalize.zig").normalize;
 
 const Version = "1.0.0";
 
+/// Contains the main execution logic to implement the representer interface.
+/// See https://github.com/exercism/docs/blob/main/building/tooling/representers/interface.md
 pub fn represent(
     gpa: Allocator,
     input_path: []const u8,
