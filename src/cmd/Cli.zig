@@ -54,7 +54,7 @@ pub fn addArgs(self: *Cli) !void {
 pub fn parseAndValidateArgs(self: *Cli) !Args {
     const root_args = try self.app.parseProcess();
 
-    if (!(root_args.isPresent("slug") and root_args.isPresent("input-dir") and root_args.isPresent("output_dir"))) {
+    if (!(root_args.isPresent("slug") and root_args.isPresent("input-dir") and root_args.isPresent("output-dir"))) {
         try self.app.displayHelp();
         return Error.MissingRequiredArgs;
     }
