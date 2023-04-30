@@ -17,7 +17,7 @@ pub fn main() !void {
         if (err == Cli.Error.MissingRequiredArgs) {
             var logger = Logger.new(Logger.global_file, Logger.global_level);
             try logger.err("Missing required arguments. See options above.", .{});
-            return;
+            return err;
         } else return err;
     };
 
