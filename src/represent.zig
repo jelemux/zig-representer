@@ -15,20 +15,7 @@ pub fn represent(
     output_path: []const u8
 ) !void {
     // open input dir
-    var input_is_absolute = true;
-    std.fs.accessAbsolute(input_path, .{}) catch |err| {
-        if (err == error.FileNotFound) {
-            input_is_absolute = false;
-        } else {
-            return err;
-        }
-    };
-
-    var input_dir = if (input_is_absolute)
-        try std.fs.openIterableDirAbsolute(input_path, .{})
-    else
-        try std.fs.cwd().openIterableDir(input_path, .{})
-    ;
+    var input_dir = try std.fs.cwd().openIterableDir(input_path, .{});
     defer input_dir.close();
 
     // read files from input dir
@@ -44,19 +31,8 @@ pub fn represent(
     defer normalization.deinit(gpa);
 
     // open output dir
-    var output_is_absolute = true;
-    std.fs.accessAbsolute(output_path, .{}) catch |err| {
-        if (err == error.FileNotFound) {
-            output_is_absolute = false;
-        } else {
-            return err;
-        }
-    };
-    var output_dir = if (output_is_absolute)
-        try std.fs.openDirAbsolute(output_path, .{})
-    else
-        try std.fs.cwd().openDir(output_path, .{})
-    ;
+    var output_dir = try std.fs.cwd().openDir(output_path, .{});
+    defer output_dir.close();
 
     // write representation.txt to output dir
     try output_dir.writeFile("representation.txt", normalization.representation);
