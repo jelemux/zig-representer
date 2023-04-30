@@ -15,7 +15,8 @@ pub const Normalization = struct {
     }
 };
 
-/// Creates a normalized representation of the given Zig code.
+/// Creates a normalized representation of the given Zig file contents.
+/// Separates the normalizations of multiple zig files with `//---`.
 pub fn normalize(gpa: Allocator, files_contents: [][]const u8) Allocator.Error!Normalization {
     var mappings = NameMappings.init(gpa);
     errdefer mappings.deinit();
