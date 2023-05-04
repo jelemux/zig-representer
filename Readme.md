@@ -25,7 +25,7 @@ zig build test
 
 #### Run
 ```shell
-zig build run --slug "two-fer" --input-dir "./testdata/two-fer" --output-dir "./test-output" --log-level info
+zig build run -- --slug "two-fer" --input-dir "./testdata/two-fer" --output-dir "./test-output" --log-level info
 ```
 
 ### 🐳 Container
@@ -37,7 +37,7 @@ docker build . -t exercism/zig-representer:<version>
 
 #### Run
 ```shell
-docker run -v "$PWD:/mnt" exercism/zig-representer:<version> "two-fer" "/mnt/testdata/two-fer" "/mnt/test-output"
+docker run -it --rm -v "$PWD:/mnt" exercism/zig-representer:<version> "two-fer" "/mnt/testdata/two-fer" "/mnt/test-output"
 ```
 
 ## Current Normalizations
