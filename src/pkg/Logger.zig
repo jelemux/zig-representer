@@ -5,9 +5,13 @@ const Logger = @This();
 
 const std = @import("std");
 const fs = std.fs;
+const WriteError = std.os.WriteError;
+
+pub const Error = error{InvalidLogLevel} || WriteError;
 
 pub var global_level = Level.Error;
 pub var global_file = std.io.getStdOut();
+
 
 const Color = enum(u8) {
     const Self = @This();
@@ -19,7 +23,7 @@ const Color = enum(u8) {
     Reset = 0,
 
     /// Writes the matching ANSI escape code of this color to the given file.
-    fn print(self: Self, out: anytype) !void {
+    fn print(self: Self, out: anytype) WriteError!void {
         try out.print("\x1b[{d}m", .{@enumToInt(self)});
     }
 };
@@ -82,7 +86,7 @@ pub fn setLevel(self: *Logger, level: Level) void {
 }
 
 /// Formats and logs the given message if the given log-level is higher than the level of this logger.
-pub fn log(self: *Logger, level: Level, comptime fmt: []const u8, args: anytype) !void {
+pub fn log(self: *Logger, level: Level, comptime fmt: []const u8, args: anytype) Error!void {
     if (@enumToInt(level) < @enumToInt(self.level)) {
         return;
     }
@@ -103,22 +107,22 @@ pub fn log(self: *Logger, level: Level, comptime fmt: []const u8, args: anytype)
 }
 
 /// Logs with `Level.Debug` level.
-pub fn debug(self: *Logger, comptime fmt: []const u8, args: anytype) !void {
+pub fn debug(self: *Logger, comptime fmt: []const u8, args: anytype) Error!void {
     try self.log(Level.Debug, fmt, args);
 }
 
 /// Logs with `Level.Info` level.
-pub fn info(self: *Logger, comptime fmt: []const u8, args: anytype) !void {
+pub fn info(self: *Logger, comptime fmt: []const u8, args: anytype) Error!void {
     try self.log(Level.Info, fmt, args);
 }
 
 /// Logs with `Level.Warn` level.
-pub fn warn(self: *Logger, comptime fmt: []const u8, args: anytype) !void {
+pub fn warn(self: *Logger, comptime fmt: []const u8, args: anytype) Error!void {
     try self.log(Level.Warn, fmt, args);
 }
 
 /// Logs with `Level.Error` level.
-pub fn err(self: *Logger, comptime fmt: []const u8, args: anytype) !void {
+pub fn err(self: *Logger, comptime fmt: []const u8, args: anytype) Error!void {
     try self.log(Level.Error, fmt, args);
 }
 
