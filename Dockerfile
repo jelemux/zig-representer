@@ -17,8 +17,6 @@ FROM registry.opensuse.org/opensuse/tumbleweed:latest
 
 WORKDIR /opt/representer
 
-USER 65532:65532
-
-COPY --from=builder --chown=65532:65532 /build/out/bin/* bin/
+COPY --from=builder /build/out/bin/* bin/
 
 ENTRYPOINT ["/opt/representer/bin/run.sh"]
