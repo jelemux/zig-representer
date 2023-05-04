@@ -1,3 +1,7 @@
+// Most of this code is copied from https://github.com/ziglang/zig/blob/0.10.x/lib/std/zig/render.zig
+// That code is under Copyright (c) 2015-2023, Zig contributors.
+// Any additional code is not.
+
 const std = @import("std");
 const assert = std.debug.assert;
 const mem = std.mem;
